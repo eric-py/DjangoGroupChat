@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-comments mr-2"></i>{{ chatObject.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <div id="messages-list" class="border rounded p-3 mb-3" style="height: 400px; overflow-y: auto;">
+                        {% for message in chatObject.message_set.all %}
+                        <div class="message {% if message.author_id == user.id %}text-right{% endif %} mb-2">
+                            <div class="message-content {% if message.author_id == user.id %}bg-info text-white{% else %}bg-light{% endif %} d-inline-block p-2 rounded">
+                                <p class="mb-0"><strong>{% if message.author_id == user.id %}You{% else %}{{ message.author }}{% endif %}</strong></p>
+                                <p class="mb-0">{{ message.text }}</p>
+                            </div>
+                            <small class="text-muted">{{ message.timestamp|date:"H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <form id="message-form" class="form-inline">
+                        <div class="input-group w-100">
+                            <input type="text" class="form-control" id="msg-input" placeholder="Type your message..." autocomplete="off">
+                            <div class="input-group-append">
+                                <button id="msg-submit" type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-lg border-0 rounded-lg mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-users mr-2"></i>Members</h5>
+                </div>
+                <div class="card-body">
+                    <div id="members-list" class="list-group">
+                        {% for member in chatObject.member_set.all %}
+                        <li id="item-{{ member }}" class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ member }}
+                            {% if member == chatObject.creator %}
+                            <span class="badge badge-primary badge-pill">Creator</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-share-alt mr-2"></i>Share</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Share this chat link with your friends:</p>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" value="{{ request.scheme }}://{{ request.get_host }}{% url 'chat:chat' chatObject.unique_code %}" id="share-link" readonly>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyShareLink()">Copy</button>
+                        </div>
+                    </div>
+                    <a href="{% url 'chat:leave_chat' chatObject.unique_code %}" class="btn btn-danger btn-block">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Leave Conversation
+                    </a>
+                    {% if chatObject.creator_id == user.id %}
+                    <p class="text-muted mt-2"><i class="fas fa-exclamation-triangle mr-2"></i>If you leave this chat it will be deleted.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<script>
+    var chat_id = {{ chat_id_json }};
+    var msgdiv = $('#messages-list');
+    var memberdiv = $('#members-list');
+
+    window.onload = function(e){
+        msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+    }
+
+    var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+    var socket = new WebSocket(
+        ws_scheme + '://' + window.location.host +
+        '/ws/chat/' + chat_id + '/');
+    
+    socket.onmessage = function(e) {
+        var message = JSON.parse(e.data);
+        switch (message['type']) {
+            case "join":
+                memberdiv.append(`
+                    <li id="item-${message['username']}" class="list-group-item d-flex justify-content-between align-items-center">
+                        ${message['username']}
+                    </li>
+                `);
+
+                msgdiv.append(`
+                    <div class="text-center my-2">
+                        <span class="badge badge-pill badge-light">${message['username']} joined the chat</span>
+                    </div>
+                `);
+                break;
+            case "leave":
+                $('#item-'+ message['username']).remove();
+
+                msgdiv.append(`
+                    <div class="text-center my-2">
+                        <span class="badge badge-pill badge-light">${message['username']} left the chat</span>
+                    </div>
+                `);
+                break;
+            case "delete":
+                alert('Chat was deleted by its creator.');
+                window.location.href = window.location.origin + '/chat/';
+                break;
+            case "msg":
+                msgdiv.append(`
+                    <div class="message mb-2">
+                        <div class="message-content bg-light d-inline-block p-2 rounded">
+                            <p class="mb-0"><strong>${message['sender']}</strong></p>
+                            <p class="mb-0">${message['text']}</p>
+                        </div>
+                        <small class="text-muted">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                    </div>
+                `);
+                break;
+            default:
+                break;
+        }
+        msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+    };
+
+    socket.onclose = function(e) {
+        console.error('Socket closed unexpectedly');
+    };
+
+    $('#message-form').submit(function(e) {
+        e.preventDefault();
+        var messageInput = $('#msg-input');
+        var message = messageInput.val();
+
+        if (message) {
+            msgdiv.append(`
+                <div class="message text-right mb-2">
+                    <div class="message-content bg-primary text-white d-inline-block p-2 rounded">
+                        <p class="mb-0"><strong>You</strong></p>
+                        <p class="mb-0">${message}</p>
+                    </div>
+                    <small class="text-muted">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                </div>
+            `);
+
+            msgdiv.scrollTop(msgdiv.prop("scrollHeight"));
+
+            socket.send(JSON.stringify({'text': message}));
+
+            messageInput.val('');
+        }
+    });
+
+    function copyShareLink() {
+        var copyText = document.getElementById("share-link");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        alert("Link copied to clipboard!");
+    }
+</script>
+
+<style>
+    .bg-primary {
+        background-color: #007bff !important;
+    }
+    .bg-success {
+        background-color: #28a745 !important;
+    }
+    .bg-info {
+        background-color: #17a2b8 !important;
+    }
+    .message-content {
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+</style>
+{% endblock scripts %}

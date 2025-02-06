@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+        <title>Chat Application</title>
+        <style>
+            body {
+                font-family: 'Roboto', sans-serif;
+            }
+            .custom-header {
+                background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+                color: white;
+                padding: 2rem 0;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .custom-header h1 {
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }
+            .custom-header p {
+                font-weight: 300;
+                opacity: 0.8;
+            }
+            .navbar {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            .navbar-brand, .nav-link {
+                color: white !important;
+            }
+            .nav-link:hover {
+                opacity: 0.8;
+            }
+            .user-info {
+                font-size: 0.9rem;
+                margin-top: 1rem;
+            }
+            .logout-form {
+                display: inline;
+            }
+            .logout-form .btn-link {
+                color: white !important;
+                padding: 0.5rem 1rem;
+                text-decoration: none;
+            }
+            .logout-form .btn-link:hover {
+                opacity: 0.8;
+                text-decoration: none;
+            }
+        </style>
+    </head>
+    <body>
+        <header class="custom-header">
+            <div class="container">
+                <h1 class="display-4">Multiple Chat Application</h1>
+                <p class="lead">Connect and chat with multiple groups in real-time</p>
+                <nav class="navbar navbar-expand-lg">
+                    <a class="navbar-brand" href="{% url 'chat:index' %}">Home</a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            {% if user.is_authenticated %}
+                            <li class="nav-item">
+                                <form method="post" action="{% url 'logout' %}" class="logout-form">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-link nav-link">Logout</button>
+                                </form>
+                            </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'register' %}">Register</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
+                {% if user.is_authenticated %}
+                <div class="user-info">
+                    You are logged in as <strong>{{ user.username }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+        <div class="container mt-4">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+        <!-- Optional JavaScript -->
+        {% block scripts %}{% endblock %}
+    </body>
+</html>

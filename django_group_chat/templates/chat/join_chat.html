@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-sign-in-alt mr-2"></i>Join Chat</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title text-center mb-4">You've been invited to join:</h5>
+                    <h3 class="text-center mb-4"><strong>{{ chatObject.title }}</strong></h3>
+                    <p class="card-text text-center">Would you like to join this chat room?</p>
+                    <form method="POST" class="text-center">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check mr-2"></i>Join Chat
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer text-muted text-center">
+                    <small>By joining, you agree to the chat room rules and guidelines.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+<style>
+    .bg-primary {
+        background-color: #007bff !important;
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+</style>
+{% endblock scripts %}

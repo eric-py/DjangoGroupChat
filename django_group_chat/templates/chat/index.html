@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h2 class="text-center mb-4">Welcome to Group Chat</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-plus-circle mr-2"></i> Create New Chat
+                    </div>
+                    <div class="card-body">
+                        <form action="{% url 'chat:create_chat' %}" method="POST">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="id_group_name">Group Name</label>
+                                <input type="text" class="form-control" name="group_name" id="id_group_name" placeholder="Enter group name" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-comments mr-2"></i> Create Chat
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <i class="fas fa-list-alt mr-2"></i> My Chats
+                    </div>
+                    <div class="card-body">
+                        {% if members %}
+                            <div class="list-group">
+                                {% for member in members %}
+                                    <a href="{% url 'chat:chat' member.chat.unique_code %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                        <span><i class="fas fa-comment-dots mr-2"></i> {{ member.chat.title }}</span>
+                                        <span class="badge badge-primary badge-pill">{{ member.chat.members.count }} members</span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">You haven't joined any chats yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+{% endblock scripts %}
